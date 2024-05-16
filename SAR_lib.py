@@ -356,7 +356,13 @@ class SAR_Indexer:
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
 
-        print("========================================")
+        print("========================================\n")
+        print("Number of indexed files:" + self.docs.length + "\n")
+        print("----------------------------------------\n")
+        print("Number of indexed articles:" + self.articles.length + "\n")
+        print("----------------------------------------\n")
+        print("TOKENS\n")
+        print("# of tokens in 'all':" + self.index.length + "\n")
 
 
 
