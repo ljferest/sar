@@ -192,8 +192,7 @@ class SAR_Wiki_Crawler:
                         if i == len(sub_index) - 1:
                             subsection = subsections[sub_index[-1]:-1]
                         else:
-                            subsection = subsections[sub_index[i]:sub_index[i +
-                                                                            1]]
+                            subsection = subsections[sub_index[i]:sub_index[i + 1]]
                         sub_match = self.subsection_re.match(subsection) 
                         if sub_match: #Si está la subsección escrita en el formato correcto
                             sub_dic = {}
@@ -304,9 +303,10 @@ class SAR_Wiki_Crawler:
                             documents.append(structured_content)
                             total_documents_captured += 1
                 if batch_size is not None and total_documents_captured % batch_size == 0:    #Si se ha puesto un límite en los documentos que se guardan por fichero, cuando se alcance ese límite los guarda y vuelve a empezar a guardar en otro fichero nuevo.
+                    files_count += 1
                     self.save_documents(documents, base_filename, files_count, total_files)
                     documents = []
-                    files_count += 1
+                    
         if documents:    #Esto se ejecuta si no se ha definido un batch_size por lo tanto todo se guarda en un fichero. Si sí se define un Batch_size, esto se ejecuta para recoger los documentos que no se hayan guardado en un fichero si el número máximo de documemtos no es múltiplo del batch_size.
             self.save_documents(documents, base_filename, files_count, total_files)
             files_count += 1
