@@ -240,7 +240,7 @@ class SAR_Indexer:
         #
         #
         #################
-        ### COMPLETAR ###
+        ### COMPLETADO ###
         #################
 
             txt = j['all']
@@ -354,17 +354,16 @@ class SAR_Indexer:
         """
         pass
         ########################################
-        ## COMPLETAR PARA TODAS LAS VERSIONES ##
+        ## COMPLETADO PARA TODAS LAS VERSIONES ##
         ########################################
 
-        print("========================================\n")
-        print("Number of indexed files:" + self.docs.length + "\n")
-        print("----------------------------------------\n")
-        print("Number of indexed articles:" + self.articles.length + "\n")
-        print("----------------------------------------\n")
-        print("TOKENS\n")
-        print("# of tokens in 'all':" + self.index.length + "\n")
-
+        print("========================================")
+        print("Number of indexed files: " + str(len(self.docs)))
+        print("----------------------------------------")
+        print("Number of indexed articles: " + str(len(self.articles)))
+        print("----------------------------------------")
+        print("TOKENS")
+        print("# of tokens in 'all': " + str(len(self.index)))
 
 
     #################################
@@ -380,7 +379,7 @@ class SAR_Indexer:
     ###################################
 
 
-    def solve_query(self, query:str, prev:Dict={}):
+    def solve_query(self, query:str, prev:Dict={}): #Ricardo Díaz
         """
         NECESARIO PARA TODAS LAS VERSIONES
 
@@ -399,8 +398,10 @@ class SAR_Indexer:
         if query is None or len(query) == 0:
             return []
 
+        else:
+            pass
         ########################################
-        ## COMPLETAR PARA TODAS LAS VERSIONES ##
+        ## FALTA COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
 
 
@@ -425,7 +426,7 @@ class SAR_Indexer:
 
         """
         ########################################
-        ## COMPLETAR PARA TODAS LAS VERSIONES ##
+        ## FALTA COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
         pass
 
@@ -505,7 +506,7 @@ class SAR_Indexer:
         
         pass
         ########################################
-        ## COMPLETAR PARA TODAS LAS VERSIONES ##
+        ## FALTA COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
 
 
@@ -673,7 +674,7 @@ class SAR_Indexer:
         """
         pass
         ################
-        ## COMPLETAR  ##
+        ## FALTA COMPLETAR  ##
         ################
         
 
