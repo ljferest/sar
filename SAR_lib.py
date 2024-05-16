@@ -224,11 +224,12 @@ class SAR_Indexer:
         documents= list(self.docs.items())
         if(documents==[]):
             self.docs[1] = filename
+            docid=1
         else:
             length = len(documents)
             self.docs[length+1] = filename
-        #articleid nos sirve para saber la posición de un articulo en el fichero
-        articleid=1
+            docid=length+1
+    
         
         for i, line in enumerate(open(filename)):
             j = self.parse_article(line)
@@ -248,7 +249,7 @@ class SAR_Indexer:
                 id=1
             else:
                 id=len(artic)+1
-            self.articles[id] = filename + "_" + str(articleid)
+            self.articles[id] = [docid,i]
             tokens_list = self.tokenize(txt)
             for token in tokens_list:
                 if self.index.get(token) is None:
