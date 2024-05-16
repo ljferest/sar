@@ -510,7 +510,7 @@ class SAR_Indexer:
 
 
 
-    def and_posting(self, p1:list, p2:list):
+    def and_posting(self, p1:list, p2:list): #Diana Bachynska
         """
         NECESARIO PARA TODAS LAS VERSIONES
 
@@ -523,14 +523,27 @@ class SAR_Indexer:
 
         """
         
-        pass
-        ########################################
-        ## COMPLETAR PARA TODAS LAS VERSIONES ##
-        ########################################
+        res  = []
+        i1 = 0
+        i2 = 0
+
+        if p1 == [] or p2 == []:  #si las dos posting list están vacias, devuelvo una lista vacía
+            return []
+        
+        while i1 < len(p1) and i2 < len(p2): #mientras no llegue al final de p1 y al final de p2
+            if  p1[i1][0] == p2[i2][0]:  #si p1 y p2 contienen el mismo documento
+                res.append(p1[i1][0]) #añado la re
+                i1 += 1
+                i2 += 1          
+            elif p1[i1][0]  < p2[i2][0]:
+                i1 += 1            
+            else: i2 += 1
+
+        return res
 
 
 
-    def or_posting(self, p1:list, p2:list):
+    def or_posting(self, p1:list, p2:list): #Diana Bachynska
         """
         NECESARIO PARA TODAS LAS VERSIONES
 
@@ -543,13 +556,38 @@ class SAR_Indexer:
 
         """
 
-        pass
-        ########################################
-        ## COMPLETAR PARA TODAS LAS VERSIONES ##
-        ########################################
+        res  = []
+        i1 = 0
+        i2 = 0
+
+        if p1 == [] or p2 == []:  #si las dos posting list están vacias, devuelvo una lista vacía
+            return []
+        
+        while i1 < len(p1) and i2 < len(p2): #mientras no llegue al final de p1 y al final de p2
+            if  p1[i1][0] == p2[i2][0]:  #si p1 y p2 contienen el mismo documento
+                res.append(p1[i1][0]) 
+                i1 += 1
+                i2 += 1          
+            elif p1[i1][0]  < p2[i2][0]:
+                res.append(p1[i1][0]) 
+                i1 += 1 
+
+            else:
+                res.append(p2[i2][0]) 
+                i2 += 1 
+        
+        while i1 < len(p1):
+            res.append(p1[i1][0])
+            i1 += 1 
+        
+        while i2 < len(p2):
+            res.append(p2[i2][0]) 
+            i2 += 1 
+        
+        return res
 
 
-    def minus_posting(self, p1, p2):
+    def minus_posting(self, p1, p2): #Diana Bachynska
         """
         OPCIONAL PARA TODAS LAS VERSIONES
 
@@ -563,13 +601,24 @@ class SAR_Indexer:
 
         """
 
+        res  = []
+        i1 = 0
+        i2 = 0
+
+        while i1 < len(p1) and i2 < len(p2): #mientras no llegue al final de p1 y al final de p2
+            if  p1[i1][0] == p2[i2][0]:  #si p1 y p2 contienen el mismo documento
+                i1 += 1
+                i2 += 1          
+            elif p1[i1][0]  < p2[i2][0]:
+                res.append(p1[i1][0]) #añado a res el documento i1 de p1
+                i1 += 1            
+            else: i2 += 1
+
+        while i1 < len(p1):
+            res.append(p1[i1][0])
+            i1 += 1 
         
-        pass
-        ########################################################
-        ## COMPLETAR PARA TODAS LAS VERSIONES SI ES NECESARIO ##
-        ########################################################
-
-
+        return res
 
 
 
