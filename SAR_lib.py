@@ -235,13 +235,14 @@ class SAR_Indexer:
             docid=length+1
         
         #creamos un indice para cada sección del articulo si no existe ya
-        if self.index.get('title') is None:
+        if self.multifield:
+          if self.index.get('title') is None:
             self.index['title'] = {}
-        if self.index.get('summary') is None:
+          if self.index.get('summary') is None:
             self.index['summary'] = {}
-        if self.index.get('section-name') is None:
+          if self.index.get('section-name') is None:
             self.index['section-name'] = {}
-        if self.index.get('all') is None:
+          if self.index.get('all') is None:
             self.index['all'] = {}
         
         for i, line in enumerate(open(filename)):
@@ -261,10 +262,7 @@ class SAR_Indexer:
                 continue
             #sacamos el id para la clave articulo y guardamos en su valor una tupla de docid y la posicion del articulo en el fichero
             artic= list(self.articles.items())
-            if(artic==[]):
-                artid=1
-            else:
-                artid=len(artic)+1
+            artid=len(artic)+1
             self.articles[artid] =(docid,i)
             if self.multifield:
                 #iteramos sobre field para ver que campos tenemos que tokenizar, dentro de los que hay que tokenizar iteramos sobre los tokens y los guardamos en el indice
@@ -284,9 +282,9 @@ class SAR_Indexer:
               tokens_list = self.tokenize(txt)
               for token in tokens_list:
                   if self.index.get(token) is None:
-                      self.index[token] = [artid]
-                  elif self.articles[artid] not in self.index[token]:
-                      self.index[token].append(artid)
+                       self.index[token] = [artid]
+                  elif artid not in self.index[token]:
+                       self.index[token].append(artid)
             self.urls.add(j['url'])    
     
 
@@ -382,7 +380,7 @@ class SAR_Indexer:
         print("Number of indexed articles: " + str(len(self.articles)))
         print("----------------------------------------")
         print("TOKENS")
-
+      
         if self.multifield:
             for field in self.fields:
                 print("# of tokens in '" + field[0] + "': " + str(len(self.index[field[0]])))
