@@ -179,7 +179,7 @@ class SAR_Indexer:
         ##########################################
 
         #si esta activado el uso de stemming llamamos a make_stemming para rellenar sel.sindex
-        if self.use_stemming:
+        if self.stemming:
             self.make_stemming()
         
         
@@ -246,20 +246,90 @@ class SAR_Indexer:
         #################
         ### COMPLETADO ###
         #################
-
-            txt = j['all']
+            #sacamos el id para la clave articulo y guardamos en su valor una tupla de docid y la posicion del articulo en el fichero
             artic= list(self.articles.items())
             if(artic==[]):
-                id=1
+                artid=1
             else:
-                id=len(artic)+1
-            self.articles[id] = [docid,i]
-            tokens_list = self.tokenize(txt)
-            for token in tokens_list:
-                if self.index.get(token) is None:
-                    self.index[token] = [self.articles[id]]
-                elif self.articles[id] not in self.index[token]:
-                    self.index[token].append(id)
+                artid=len(artic)+1
+            self.articles[artid] =(docid,i)
+            if self.multifield:
+                #guardamos el contenido de cada sección del articulo
+                title= j['title']
+                summary = j['summary']
+                section_name = j['section-name']
+                url= j['url']
+                all= j['all']
+                #añadimos la url a la lista de urls
+                if self.index.get('url') is None:
+                    self.index['url'] = [url]
+                else:
+                    self.index['url'].append(url)
+                #tokenizamos el contenido de cada sección del articulo a tokennizar
+                tokens_list_title = self.tokenize(title)
+                tokens_list_summary = self.tokenize(summary)
+                tokens_list_section_name = self.tokenize(section_name)
+                tokens_list_all = self.tokenize(all)
+                #creamos un indice para cada sección del articulo si no existe ya
+                if self.index.get('title') is None:
+                    self.index['title'] = {}
+                if self.index.get('summary') is None:
+                    self.index['summary'] = {}
+                if self.index.get('section-name') is None:
+                    self.index['section-name'] = {}
+                if self.index.get('all') is None:
+                    self.index['all'] = {}
+            
+                for token in tokens_list_title:
+                    if self.index['title'].get(token) is None:
+                        self.index['title'][token] = [artid]
+                    elif self.articles[id] not in self.index[token]:
+                        self.index[token].append(artid)
+                for token in tokens_list_summary:
+                    if self.index['summary'].get(token) is None:
+                        self.index['summary'][token] = [artid]
+                    elif self.articles[id] not in self.index[token]:
+                        self.index[token].append(artid)
+                for token in tokens_list_section_name:
+                    if self.index['section-name'].get(token) is None:
+                        self.index['section-name'][token] = [artid]
+                    elif self.articles[id] not in self.index[token]:
+                        self.index[token].append(artid)
+                for token in tokens_list_all:
+                    if self.index['all'].get(token) is None:
+                        self.index['all'][token] = [artid]
+                    elif self.articles[id] not in self.index[token]:
+                        self.index[token].append(artid)
+            else:        
+              txt = j['all']
+              tokens_list = self.tokenize(txt)
+              for token in tokens_list:
+                  if self.index.get(token) is None:
+                      self.index[token] = [artid]
+                  elif self.articles[artid] not in self.index[token]:
+                      self.index[token].append(artid)
+                
+                
+        """
+        txt = j['all']
+        #title = j['title']
+        artic= list(self.articles.items())
+        if(artic==[]):
+            id=1
+            self.articles[id] = filename + "_" + str(articleid)
+        else:
+            leng = len(artic)
+            id=leng+1
+            self.articles[id] = filename + "_" + str(articleid)
+        tokens_list = self.tokenize(txt)
+        for token in tokens_list:
+            if self.index.get(token) is None:
+                self.index[token] = {}
+            self.index[token][id] = self.articles[id]
+        """
+            
+            
+
 
 
     def set_stemming(self, v:bool):
