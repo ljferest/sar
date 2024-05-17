@@ -568,33 +568,21 @@ class SAR_Indexer:
 
 
 
-    def reverse_posting(self, p:list): #Diana Bachynska
+    def reverse_posting(self, p):
         """
-        NECESARIO PARA TODAS LAS VERSIONES
-
         Devuelve una posting list con todas las noticias excepto las contenidas en p.
         Util para resolver las queries con NOT.
 
         param:  "p": posting list
 
-        return: posting list con todos los artid exceptos los contenidos en p
-
+        return: posting list con todos los newid exceptos los contenidos en p
         """
+        # Obtener todos los documentos en el índice
+        all_docs = [[doc_id, 0] for doc_id in sorted(self.docs.keys())]
 
-        
-        docs = set(self.docs.keys()) #recupera todos los id de los docs del indice
-    
-        doc_p = set(Id for Id, _ in p) #extrae los id de la lista de postings de p
-        
-        dif_doc = docs - doc_p #solo me quedo con los id que estan en docs pero no en doc_p
-
-        reverse_posting = []
-
-        for Id in dif_doc:
-            reverse_posting.append([Id, 0])  #añade los id de la diferencia en reverse_posting 
-       
-        return reverse_posting
-
+        # Utilizar el método minus_posting para obtener todos los documentos excepto los que están en p
+        return self.minus_posting(all_docs, p)
+                                  
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -762,9 +750,12 @@ class SAR_Indexer:
         """
 
         sol = self.solve_query(query)
-        distintos = set(sol['docid'])
-        n = len(distintos)
-        print(query, "  ", n)
+        print("========================================")
+        for artid in sol:
+            print(f'{artid} - {self.articles[artid]}')
+        print("========================================")
+        print(f"Number of results: {len(sol)}")
+        return len(sol)
         ################
         ## COMPLETAR  ##
         ################
