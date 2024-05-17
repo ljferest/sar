@@ -177,6 +177,10 @@ class SAR_Indexer:
         ##########################################
         ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
         ##########################################
+
+        #si esta activado el uso de stemming llamamos a make_stemming para rellenar sel.sindex
+        if self.use_stemming:
+            self.make_stemming()
         
         
     def parse_article(self, raw_line:str) -> Dict[str, str]:
@@ -304,6 +308,15 @@ class SAR_Indexer:
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
+        
+        for token in self.index:
+            stem = self.stemmer.stem(token)
+            if self.sindex.get(stem) is None:
+               postinglist = self.get_stemming(token, field=None)
+               self.sindex[stem] = postinglist
+
+        
+
 
 
     
@@ -478,6 +491,15 @@ class SAR_Indexer:
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
+
+        #inicializamos la posting list con term
+        field = [term]
+
+        #buscamos todos los tokens que tengan el mismo stem y los añadimos a field
+        for token in self.index:
+            if self.stemmer.stem(token) == stem:
+                field.append(token)
+        return field        
 
     def get_permuterm(self, term:str, field:Optional[str]=None):
         """
