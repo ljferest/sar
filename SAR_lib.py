@@ -233,7 +233,16 @@ class SAR_Indexer:
             length = len(documents)
             self.docs[length+1] = filename
             docid=length+1
-    
+        
+        #creamos un indice para cada sección del articulo si no existe ya
+        if self.index.get('title') is None:
+            self.index['title'] = {}
+        if self.index.get('summary') is None:
+            self.index['summary'] = {}
+        if self.index.get('section-name') is None:
+            self.index['section-name'] = {}
+        if self.index.get('all') is None:
+            self.index['all'] = {}
         
         for i, line in enumerate(open(filename)):
             j = self.parse_article(line)
@@ -246,6 +255,10 @@ class SAR_Indexer:
         #################
         ### COMPLETADO ###
         #################
+
+            #si el articulo ya esta indexado, no lo indexamos de nuevo
+            if self.already_in_index(j):
+                continue
             #sacamos el id para la clave articulo y guardamos en su valor una tupla de docid y la posicion del articulo en el fichero
             artic= list(self.articles.items())
             if(artic==[]):
@@ -254,52 +267,18 @@ class SAR_Indexer:
                 artid=len(artic)+1
             self.articles[artid] =(docid,i)
             if self.multifield:
-                #guardamos el contenido de cada sección del articulo
-                title= j['title']
-                summary = j['summary']
-                section_name = j['section-name']
-                url= j['url']
-                all= j['all']
-                #añadimos la url a la lista de urls
-                if self.index.get('url') is None:
-                    self.index['url'] = [url]
-                else:
-                    self.index['url'].append(url)
-                #tokenizamos el contenido de cada sección del articulo a tokennizar
-                tokens_list_title = self.tokenize(title)
-                tokens_list_summary = self.tokenize(summary)
-                tokens_list_section_name = self.tokenize(section_name)
-                tokens_list_all = self.tokenize(all)
-                #creamos un indice para cada sección del articulo si no existe ya
-                if self.index.get('title') is None:
-                    self.index['title'] = {}
-                if self.index.get('summary') is None:
-                    self.index['summary'] = {}
-                if self.index.get('section-name') is None:
-                    self.index['section-name'] = {}
-                if self.index.get('all') is None:
-                    self.index['all'] = {}
-            
-                for token in tokens_list_title:
-                    if self.index['title'].get(token) is None:
-                        self.index['title'][token] = [artid]
-                    elif self.articles[id] not in self.index[token]:
-                        self.index[token].append(artid)
-                for token in tokens_list_summary:
-                    if self.index['summary'].get(token) is None:
-                        self.index['summary'][token] = [artid]
-                    elif self.articles[id] not in self.index[token]:
-                        self.index[token].append(artid)
-                for token in tokens_list_section_name:
-                    if self.index['section-name'].get(token) is None:
-                        self.index['section-name'][token] = [artid]
-                    elif self.articles[id] not in self.index[token]:
-                        self.index[token].append(artid)
-                for token in tokens_list_all:
-                    if self.index['all'].get(token) is None:
-                        self.index['all'][token] = [artid]
-                    elif self.articles[id] not in self.index[token]:
-                        self.index[token].append(artid)
+                #iteramos sobre field para ver que campos tenemos que tokenizar, dentro de los que hay que tokenizar iteramos sobre los tokens y los guardamos en el indice
+               
+                for tupla in self.fields:
+                    if tupla[1]:
+                        for token in self.tokenize(j[tupla[0]]):
+                            if self.index[tupla[0]].get(token) is None:
+                                self.index[tupla[0]][token] = [artid]
+                            elif artid not in self.index[tupla[0]][token]:
+                                self.index[tupla[0]][token].append(artid)
+                    else:
+                        self.index[tupla[0]] = j[tupla[0]]           
+               
             else:        
               txt = j['all']
               tokens_list = self.tokenize(txt)
@@ -308,29 +287,8 @@ class SAR_Indexer:
                       self.index[token] = [artid]
                   elif self.articles[artid] not in self.index[token]:
                       self.index[token].append(artid)
-                
-                
-        """
-        txt = j['all']
-        #title = j['title']
-        artic= list(self.articles.items())
-        if(artic==[]):
-            id=1
-            self.articles[id] = filename + "_" + str(articleid)
-        else:
-            leng = len(artic)
-            id=leng+1
-            self.articles[id] = filename + "_" + str(articleid)
-        tokens_list = self.tokenize(txt)
-        for token in tokens_list:
-            if self.index.get(token) is None:
-                self.index[token] = {}
-            self.index[token][id] = self.articles[id]
-        """
-            
-            
-
-
+            self.urls.add(j['url'])    
+    
 
     def set_stemming(self, v:bool):
         """
@@ -425,8 +383,12 @@ class SAR_Indexer:
         print("Number of indexed articles: " + str(len(self.articles)))
         print("----------------------------------------")
         print("TOKENS")
-        print("# of tokens in 'all': " + str(len(self.index)))
 
+        if self.multifield:
+            for field in self.fields:
+                print("# of tokens in '" + field[0] + "': " + str(len(self.index[field[0]])))
+        else:
+            print("# of tokens: " + str(len(self.index)))
 
     #################################
     ###                           ###
