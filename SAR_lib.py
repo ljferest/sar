@@ -257,27 +257,6 @@ class SAR_Indexer:
                 elif self.articles[id] not in self.index[token]:
                     self.index[token].append(id)
 
-        """
-        txt = j['all']
-        #title = j['title']
-        artic= list(self.articles.items())
-        if(artic==[]):
-            id=1
-            self.articles[id] = filename + "_" + str(articleid)
-        else:
-            leng = len(artic)
-            id=leng+1
-            self.articles[id] = filename + "_" + str(articleid)
-        tokens_list = self.tokenize(txt)
-        for token in tokens_list:
-            if self.index.get(token) is None:
-                self.index[token] = {}
-            self.index[token][id] = self.articles[id]
-        """
-            
-            
-
-
 
     def set_stemming(self, v:bool):
         """
@@ -379,7 +358,7 @@ class SAR_Indexer:
     ###################################
 
 
-    def solve_query(self, query:str, prev:Dict={}): #Ricardo Díaz
+    def solve_query(self, query:str, prev:Dict={}): #Ricardo Díaz y David Oltra
         """
         NECESARIO PARA TODAS LAS VERSIONES
 
@@ -397,17 +376,45 @@ class SAR_Indexer:
 
         if query is None or len(query) == 0:
             return []
-
+        pls = []
+        tokens = self.tokenize(query)   #tokenizamos la query
+        if len(tokens) == 1:  #si solo hay un token en la query
+            term, field = self.get_field(tokens[0])  #obtenemos el token y el campo
+            return self.get_posting(term, field)  #devolvemos la posting list del token
         else:
-            
+            opi = len(tokens) - 2  #el penúltimo token de la query es un operador
+            op = tokens[opi]  #el penúltimo token de la query es un operador
+            preop = tokens[:opi]  #los tokens anteriores al operador
+            postop = tokens[opi+1:] #los tokens posteriores al operador
+
+            if op == 'NOT':
+                if opi == 0: #el NOT está al principio de la query
+                    return self.reverse_posting(self.solve_query(postop))  #devolvemos la NOT del resto (sea un token o una query)
+                else:
+                    opi -= 1
+                    op = tokens[opi]
+                    preop = tokens[:opi]
+                    if op == 'AND':
+                        return self.minus_posting(self.solve_query(preop), self.solve_query(postop))  #devolvemos la resta de las dos posting list
+                    elif op == 'OR':
+                        return self.or_posting(self.solve_query(preop), self.reverse_posting(self.solve_query(postop)))
+            elif op == 'AND':
+                return self.and_posting(self.solve_query(preop), self.solve_query(postop))
+            elif op == 'OR':
+                return self.or_posting(self.solve_query(preop), self.solve_query(postop))
+
         ########################################
-        ## FALTA COMPLETAR PARA TODAS LAS VERSIONES ##
+        ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
 
-
-
-
-    def get_posting(self, term:str, field:Optional[str]=None): #Ricardo Díaz
+    def get_field(self, cadena:str): #Ricardo Díaz y David Oltra
+        tokens = cadena.split(':')
+        if len(tokens) == 1:
+            return tokens[0], self.def_field
+        else:
+            return tokens[1], tokens[0]
+        
+    def get_posting(self, term:str, field:Optional[str]=None): #Ricardo Díaz y David Oltra
         """
 
         Devuelve la posting list asociada a un termino. 
@@ -425,10 +432,13 @@ class SAR_Indexer:
         NECESARIO PARA TODAS LAS VERSIONES
 
         """
+        
         ########################################
-        ## FALTA COMPLETAR PARA TODAS LAS VERSIONES ##
+        ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
-        pl = self.index.get(term, [])
+
+        pl = self.index.get(term, field)
+        return pl
 
 
 
@@ -489,7 +499,7 @@ class SAR_Indexer:
 
 
 
-    def reverse_posting(self, p:list):
+    def reverse_posting(self, p:list): #Diana Bachynska
         """
         NECESARIO PARA TODAS LAS VERSIONES
 
@@ -631,8 +641,6 @@ class SAR_Indexer:
             i1 += 1 
         
         return res
-
-
 
     #####################################
     ###                               ###
