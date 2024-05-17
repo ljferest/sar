@@ -399,7 +399,7 @@ class SAR_Indexer:
             return []
 
         else:
-            pass
+            
         ########################################
         ## FALTA COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -407,7 +407,7 @@ class SAR_Indexer:
 
 
 
-    def get_posting(self, term:str, field:Optional[str]=None):
+    def get_posting(self, term:str, field:Optional[str]=None): #Ricardo Díaz
         """
 
         Devuelve la posting list asociada a un termino. 
@@ -428,7 +428,7 @@ class SAR_Indexer:
         ########################################
         ## FALTA COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
-        pass
+        pl = self.index.get(term, [])
 
 
 
