@@ -235,14 +235,16 @@ class SAR_Indexer:
             docid=length+1
         
         #creamos un indice para cada sección del articulo si no existe ya
-        if self.index.get('title') is None:
-            self.index['title'] = {}
-        if self.index.get('summary') is None:
-            self.index['summary'] = {}
-        if self.index.get('section-name') is None:
-            self.index['section-name'] = {}
-        if self.index.get('all') is None:
-            self.index['all'] = {}
+        
+        if self.multifield:
+            if self.index.get('title') is None:
+                self.index['title'] = {}
+            if self.index.get('summary') is None:
+                self.index['summary'] = {}
+            if self.index.get('section-name') is None:
+                self.index['section-name'] = {}
+            if self.index.get('all') is None:
+                self.index['all'] = {}
         
         for i, line in enumerate(open(filename)):
             j = self.parse_article(line)
@@ -285,7 +287,7 @@ class SAR_Indexer:
               for token in tokens_list:
                   if self.index.get(token) is None:
                       self.index[token] = [artid]
-                  elif self.articles[artid] not in self.index[token]:
+                  elif self.index[token].count(artid) == 0:
                       self.index[token].append(artid)
             self.urls.add(j['url'])    
     
@@ -424,6 +426,7 @@ class SAR_Indexer:
         tokens = self.tokenize(query)   #tokenizamos la query
         if len(tokens) == 1:  #si solo hay un token en la query
             term, field = self.get_field(tokens[0])  #obtenemos el token y el campo
+            print(f"esto es lo que devuelve el indexer: {self.index}")
             return self.get_posting(term, field)  #devolvemos la posting list del token
         else:
             opi = len(tokens) - 2  #el penúltimo token de la query es un operador
@@ -481,7 +484,7 @@ class SAR_Indexer:
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
 
-        pl = self.index.get(term, field)
+        pl = self.index.get(term)
         return pl
 
 
@@ -735,8 +738,12 @@ class SAR_Indexer:
 
         sol = self.solve_query(query)
         print("========================================")
-        for artid in sol:
-            print(f'{artid} - {self.articles[artid]}')
+        for i, artid in sol:
+            docid, linea = artid
+            doc = self.docs[docid]
+            with open(doc) as fh:
+                dic = self.parse_article(fh.readlines()[linea])
+            print(f"# {i:02d} {dic['title']}: {dic['url']}")
         print("========================================")
         print(f"Number of results: {len(sol)}")
         return len(sol)
