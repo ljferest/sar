@@ -263,10 +263,7 @@ class SAR_Indexer:
                 continue
             #sacamos el id para la clave articulo y guardamos en su valor una tupla de docid y la posicion del articulo en el fichero
             artic= list(self.articles.items())
-            if(artic==[]):
-                artid=1
-            else:
-                artid=len(artic)+1
+            artid=len(artic)+1
             self.articles[artid] =(docid,i)
             if self.multifield:
                 #iteramos sobre field para ver que campos tenemos que tokenizar, dentro de los que hay que tokenizar iteramos sobre los tokens y los guardamos en el indice
@@ -337,13 +334,21 @@ class SAR_Indexer:
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
-        
-        for token in self.index:
-            stem = self.stemmer.stem(token)
-            if self.sindex.get(stem) is None:
-               postinglist = self.get_stemming(token, field=None)
-               self.sindex[stem] = postinglist
-
+        if self.multifield:
+            for tupla in self.fields:
+                for token in self.index[tupla[0]]:
+                    stem = self.stemmer[tupla[0]].stem(token)
+                    if self.sindex[tupla[0]].get(stem) is None:
+                        postinglist = self.get_stemming(token, field=None)
+                        self.sindex[tupla[0]][stem] = postinglist
+                    
+                
+        else:
+            for token in self.index:
+                stem = self.stemmer.stem(token)
+                if self.sindex.get(stem) is None:
+                    postinglist = self.get_stemming(token, field=None)
+                    self.sindex[stem] = postinglist
         
 
 
@@ -379,6 +384,7 @@ class SAR_Indexer:
         ########################################
 
         print("========================================")
+        print(self.index)
         print("Number of indexed files: " + str(len(self.docs)))
         print("----------------------------------------")
         print("Number of indexed articles: " + str(len(self.articles)))
@@ -390,6 +396,10 @@ class SAR_Indexer:
                 print("# of tokens in '" + field[0] + "': " + str(len(self.index[field[0]])))
         else:
             print("# of tokens: " + str(len(self.index)))
+        if self.stemming:
+            print("----------------------------------------")
+            print("STEMS")
+            print("# of stems: " + str(len(self.sindex)))
 
     #################################
     ###                           ###
@@ -529,10 +539,15 @@ class SAR_Indexer:
         #inicializamos la posting list con term
         field = [term]
 
-        #buscamos todos los tokens que tengan el mismo stem y los añadimos a field
-        for token in self.index:
-            if self.stemmer.stem(token) == stem:
-                field.append(token)
+        #buscamos todos los tokens que tengan el mismo stem y los añadimos a field 
+        if self.multifield:
+                pass
+        
+        else:
+            for token in self.index:
+                if self.stemmer.stem(token) == stem:
+                    field.append(token)
+        
         return field        
 
     def get_permuterm(self, term:str, field:Optional[str]=None):
