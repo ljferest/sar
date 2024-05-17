@@ -304,7 +304,6 @@ class SAR_Indexer:
 
         """
         
-        pass
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
@@ -344,7 +343,7 @@ class SAR_Indexer:
         Muestra estadisticas de los indices
         
         """
-        pass
+        
         ########################################
         ## COMPLETADO PARA TODAS LAS VERSIONES ##
         ########################################
@@ -396,7 +395,7 @@ class SAR_Indexer:
             return self.get_posting(term, field)  #devolvemos la posting list del token
         else:
             opi = len(tokens) - 2  #el penúltimo token de la query es un operador
-            op = tokens[opi]  #el penúltimo token de la query es un operador
+            op = tokens[opi]
             preop = tokens[:opi]  #los tokens anteriores al operador
             postop = tokens[opi+1:] #los tokens posteriores al operador
 
@@ -445,7 +444,7 @@ class SAR_Indexer:
         NECESARIO PARA TODAS LAS VERSIONES
 
         """
-        
+
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -702,7 +701,7 @@ class SAR_Indexer:
         return not errors
 
 
-    def solve_and_show(self, query:str):
+    def solve_and_show(self, query:str): #Ricardo Díaz y David Oltra
         """
         NECESARIO PARA TODAS LAS VERSIONES
 
@@ -713,9 +712,13 @@ class SAR_Indexer:
         return: el numero de artículo recuperadas, para la opcion -T
 
         """
-        pass
+
+        sol = self.solve_query(query)
+        distintos = set(sol['docid'])
+        n = len(distintos)
+        print(query, "  ", n)
         ################
-        ## FALTA COMPLETAR  ##
+        ## COMPLETAR  ##
         ################
         
 
