@@ -263,10 +263,7 @@ class SAR_Indexer:
                 continue
             #sacamos el id para la clave articulo y guardamos en su valor una tupla de docid y la posicion del articulo en el fichero
             artic= list(self.articles.items())
-            if(artic==[]):
-                artid=1
-            else:
-                artid=len(artic)+1
+            artid=len(artic)+1
             self.articles[artid] =(docid,i)
             if self.multifield:
                 #iteramos sobre field para ver que campos tenemos que tokenizar, dentro de los que hay que tokenizar iteramos sobre los tokens y los guardamos en el indice
@@ -377,7 +374,6 @@ class SAR_Indexer:
         ########################################
         ## COMPLETADO PARA TODAS LAS VERSIONES ##
         ########################################
-
         print("========================================")
         print("Number of indexed files: " + str(len(self.docs)))
         print("----------------------------------------")
@@ -422,32 +418,36 @@ class SAR_Indexer:
 
         if query is None or len(query) == 0:
             return []
-        pls = []
         tokens = self.tokenize(query)   #tokenizamos la query
         if len(tokens) == 1:  #si solo hay un token en la query
             term, field = self.get_field(tokens[0])  #obtenemos el token y el campo
-            print(f"esto es lo que devuelve el indexer: {self.index}")
             return self.get_posting(term, field)  #devolvemos la posting list del token
         else:
-            opi = len(tokens) - 2  #el penúltimo token de la query es un operador
+            opi = len(tokens) - 1  #el penúltimo token de la query es un operador
+            print(opi)
             op = tokens[opi]
+            print(op)
             preop = tokens[:opi]  #los tokens anteriores al operador
+            print(preop)
             postop = tokens[opi+1:] #los tokens posteriores al operador
-
-            if op == 'NOT':
+            print(postop)
+            if op == 'not':
+                print("pasa 1")
                 if opi == 0: #el NOT está al principio de la query
+                    print("pasa 2")
                     return self.reverse_posting(self.solve_query(postop))  #devolvemos la NOT del resto (sea un token o una query)
                 else:
+                    print("pasa 3")
                     opi -= 1
                     op = tokens[opi]
                     preop = tokens[:opi]
-                    if op == 'AND':
+                    if op == 'and':
                         return self.minus_posting(self.solve_query(preop), self.solve_query(postop))  #devolvemos la resta de las dos posting list
-                    elif op == 'OR':
+                    elif op == 'or':
                         return self.or_posting(self.solve_query(preop), self.reverse_posting(self.solve_query(postop)))
-            elif op == 'AND':
+            elif op == 'and':
                 return self.and_posting(self.solve_query(preop), self.solve_query(postop))
-            elif op == 'OR':
+            elif op == 'or':
                 return self.or_posting(self.solve_query(preop), self.solve_query(postop))
 
         ########################################
@@ -608,7 +608,6 @@ class SAR_Indexer:
         return res
 
 
-
     def or_posting(self, p1:list, p2:list): #Diana Bachynska
         """
         NECESARIO PARA TODAS LAS VERSIONES
@@ -719,8 +718,6 @@ class SAR_Indexer:
                 else:
                     print(f'>>>>{query}\t{reference} != {result}<<<<')
                     errors = True                    
-            else:
-                print(query)
         return not errors
 
 
@@ -737,13 +734,16 @@ class SAR_Indexer:
         """
 
         sol = self.solve_query(query)
+        print(sol)
         print("========================================")
-        for i, artid in sol:
-            docid, linea = artid
+        i = 1
+        for artid in sol:
+            docid, linea = self.articles[artid]
             doc = self.docs[docid]
             with open(doc) as fh:
                 dic = self.parse_article(fh.readlines()[linea])
             print(f"# {i:02d} {dic['title']}: {dic['url']}")
+            i+=1
         print("========================================")
         print(f"Number of results: {len(sol)}")
         return len(sol)
