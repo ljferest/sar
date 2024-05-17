@@ -300,7 +300,7 @@ class SAR_Indexer:
                         self.index['all'][token] = [artid]
                     elif self.articles[id] not in self.index[token]:
                         self.index[token].append(artid)
-            else:        
+            else:
               txt = j['all']
               tokens_list = self.tokenize(txt)
               for token in tokens_list:
@@ -308,28 +308,6 @@ class SAR_Indexer:
                       self.index[token] = [artid]
                   elif self.articles[artid] not in self.index[token]:
                       self.index[token].append(artid)
-                
-                
-        """
-        txt = j['all']
-        #title = j['title']
-        artic= list(self.articles.items())
-        if(artic==[]):
-            id=1
-            self.articles[id] = filename + "_" + str(articleid)
-        else:
-            leng = len(artic)
-            id=leng+1
-            self.articles[id] = filename + "_" + str(articleid)
-        tokens_list = self.tokenize(txt)
-        for token in tokens_list:
-            if self.index.get(token) is None:
-                self.index[token] = {}
-            self.index[token][id] = self.articles[id]
-        """
-            
-            
-
 
 
     def set_stemming(self, v:bool):
@@ -413,7 +391,7 @@ class SAR_Indexer:
         Muestra estadisticas de los indices
         
         """
-        
+
         ########################################
         ## COMPLETADO PARA TODAS LAS VERSIONES ##
         ########################################
