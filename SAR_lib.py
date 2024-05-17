@@ -496,17 +496,28 @@ class SAR_Indexer:
         Devuelve una posting list con todas las noticias excepto las contenidas en p.
         Util para resolver las queries con NOT.
 
-
         param:  "p": posting list
-
 
         return: posting list con todos los artid exceptos los contenidos en p
 
         """
+
         
-        pass
+        docs = set(self.docs.keys()) #recupera todos los id de los docs del indice
+    
+        doc_p = set(Id for Id, _ in p) #extrae los id de la lista de postings de p
+        
+        dif_doc = docs - doc_p #solo me quedo con los id que estan en docs pero no en doc_p
+
+        reverse_posting = []
+
+        for Id in dif_doc:
+            reverse_posting.append([Id, 0])  #añade los id de la diferencia en reverse_posting 
+       
+        return reverse_posting
+
         ########################################
-        ## FALTA COMPLETAR PARA TODAS LAS VERSIONES ##
+        ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
 
 
