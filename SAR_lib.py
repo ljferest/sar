@@ -181,6 +181,10 @@ class SAR_Indexer:
         #si esta activado el uso de stemming llamamos a make_stemming para rellenar sel.sindex
         if self.stemming:
             self.make_stemming()
+  
+        #si esta activado el uso de permuterm llamamos a make_permuterm para rellenar self.ptindex
+        if self.permuterm:
+            self.make_permuterm()
         
         
     def parse_article(self, raw_line:str) -> Dict[str, str]:
@@ -314,7 +318,7 @@ class SAR_Indexer:
         return self.tokenizer.sub(' ', text.lower()).split()
 
 
-    def make_stemming(self):
+    def make_stemming(self):#Luis José Ferrer Estellés y  Diana Bachynska
         """
 
         Crea el indice de stemming (self.sindex) para los terminos de todos los indices.
@@ -335,26 +339,24 @@ class SAR_Indexer:
                 for token in self.index[tupla[0]]:
                     stem = self.stemmer.stem(token)
                     if self.sindex[tupla[0]].get(stem) is None:
-                        postinglist = self.get_stemming(token, field=None)
-                    else:
-                        postinglist = self.get_stemming(token, field=self.sindex[tupla[0]][stem])
-                    self.sindex[tupla[0]][stem] = postinglist
+                        self.sindex[tupla[0]][stem] = []
+                    if token not in self.sindex[tupla[0]][stem]:
+                        self.sindex[tupla[0]][stem].append(token)
                     
                 
         else:
             for token in self.index:
                 stem = self.stemmer.stem(token)
                 if self.sindex.get(stem) is None:
-                    postinglist = self.get_stemming(token, field=None)
-                else:
-                    postinglist = self.get_stemming(token, field=self.sindex[stem])
-                self.sindex[stem] = postinglist
+                    self.sindex[stem] = []
+                if token not in self.sindex[stem]:
+                    self.sindex[stem].append(token)
         
 
 
 
     
-    def make_permuterm(self):
+    def make_permuterm(self):#Luis José Ferrer Estellés y Diana Bachynska
         """
 
         Crea el indice permuterm (self.ptindex) para los terminos de todos los indices.
@@ -363,10 +365,36 @@ class SAR_Indexer:
 
 
         """
-        pass
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
+
+        #si es multifield creamos un indice permuterm para cada campo
+        if self.multifield:
+            for field in self.fields:
+                #creamos un indice permuterm para cada campo
+                self.ptindex[field[0]] = {}
+                for token in self.index[field[0]]:
+                    token += '$'
+                    #creamos todos los posibles permuterms de un token
+                    for i in range(len(token)):
+                        #si el indice permuterm no tiene la clave token[i:] + token[:i], la creamos
+                        if self.ptindex[field[0]].get(token[i:] + token[:i]) is None:
+                            self.ptindex[field[0]][token[i:] + token[:i]] = []
+                        #si el token no esta en el indice permuterm, lo añadimos
+                        if token not in self.ptindex[field[0]][token[i:] + token[:i]]:
+                            self.ptindex[field[0]][token[i:] + token[:i]].append(token)
+        else:
+            for token in self.index:
+                token += '$'
+                #creamos todos los posibles permuterms de un token
+                for i in range(len(token)):
+                    #si el indice permuterm no tiene la clave token[i:] + token[:i], la creamos
+                    if self.ptindex.get(token[i:] + token[:i]) is None:
+                        self.ptindex[token[i:] + token[:i]] = []
+                    #si el token no esta en el indice permuterm, lo añadimos
+                    if token not in self.ptindex[token[i:] + token[:i]]:
+                        self.ptindex[token[i:] + token[:i]].append(token)
 
 
 
@@ -388,20 +416,32 @@ class SAR_Indexer:
         print("Number of indexed articles: " + str(len(self.articles)))
         print("----------------------------------------")
         print("TOKENS")
-
+        #si es multifield mostramos el numero de tokens en cada campo
         if self.multifield:
             for field in self.fields:
                 print("# of tokens in '" + field[0] + "': " + str(len(self.index[field[0]])))
         else:
             print("# of tokens: " + str(len(self.index)))
+        #si esta activado el uso de stemming mostramos el numero de stems
         if self.stemming:
             print("----------------------------------------")
             print("STEMS")
+            #si es multifield mostramos el numero de stems en cada campo
             if self.multifield:
                 for field in self.fields:
                     print("# of stems in '" + field[0] + "': " + str(len(self.sindex[field[0]])))
             else:
                 print("# of stems: " + str(len(self.sindex)))
+        #si esta activado el uso de permuterm mostramos el numero de permuterms
+        if self.permuterm:
+            print("----------------------------------------")
+            print("PERMUTERMS")
+            #si es multifield mostramos el numero de permuterms en cada campo
+            if self.multifield:
+                for field in self.fields:
+                    print("# of permuterms in '" + field[0] + "': " + str(len(self.ptindex[field[0]])))
+            else:
+                print("# of permuterms: " + str(len(self.ptindex)))
 
     #################################
     ###                           ###
@@ -519,7 +559,7 @@ class SAR_Indexer:
         ########################################################
 
 
-    def get_stemming(self, term:str, field: Optional[str]=None):
+    def get_stemming(self, term:str, field: Optional[str]=None):#Luis José Ferrer Estellés
         """
 
         Devuelve la posting list asociada al stem de un termino.
@@ -538,19 +578,15 @@ class SAR_Indexer:
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
         
+        #si es multifield devolvemos la posting list del campo y el stem
+        if self.multifield:
+                return self.sindex[field].get(stem)
+        #si no es multifield devolvemos la posting list del stem
+        else:
+            return self.sindex.get(stem)
+             
 
-        #inicializamos la posting list con term si esta vacia
-        if field is None:
-            field = [term]
-            
-        
-        #si el termino no esta en la posting list, lo añadimos
-        if term not in field:
-            field.append(term)
-        
-        return field        
-
-    def get_permuterm(self, term:str, field:Optional[str]=None):
+    def get_permuterm(self, term:str, field:Optional[str]=None):#Diana Bachynska
         """
 
         Devuelve la posting list asociada a un termino utilizando el indice permuterm.
@@ -566,7 +602,12 @@ class SAR_Indexer:
         ##################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA PERMUTERM ##
         ##################################################
-        pass
+        #si es multifield devolvemos la posting list del campo y el term
+        if self.multifield:
+            return self.ptindex[field].get(term)
+        #si no es multifield devolvemos la posting list del term
+        else:
+            return self.ptindex.get(term)
 
 
 
