@@ -237,14 +237,9 @@ class SAR_Indexer:
         #creamos un indice para cada sección del articulo si no existe ya
         
         if self.multifield:
-            if self.index.get('title') is None:
-                self.index['title'] = {}
-            if self.index.get('summary') is None:
-                self.index['summary'] = {}
-            if self.index.get('section-name') is None:
-                self.index['section-name'] = {}
-            if self.index.get('all') is None:
-                self.index['all'] = {}
+            for tupla in self.fields:
+                if self.index.get(tupla[0]) is None:
+                    self.index[tupla[0]] = {}
         
         for i, line in enumerate(open(filename)):
             j = self.parse_article(line)
@@ -336,11 +331,14 @@ class SAR_Indexer:
         ####################################################
         if self.multifield:
             for tupla in self.fields:
+                self.sindex[tupla[0]] = {}
                 for token in self.index[tupla[0]]:
-                    stem = self.stemmer[tupla[0]].stem(token)
+                    stem = self.stemmer.stem(token)
                     if self.sindex[tupla[0]].get(stem) is None:
                         postinglist = self.get_stemming(token, field=None)
-                        self.sindex[tupla[0]][stem] = postinglist
+                    else:
+                        postinglist = self.get_stemming(token, field=self.sindex[tupla[0]][stem])
+                    self.sindex[tupla[0]][stem] = postinglist
                     
                 
         else:
@@ -348,7 +346,9 @@ class SAR_Indexer:
                 stem = self.stemmer.stem(token)
                 if self.sindex.get(stem) is None:
                     postinglist = self.get_stemming(token, field=None)
-                    self.sindex[stem] = postinglist
+                else:
+                    postinglist = self.get_stemming(token, field=self.sindex[stem])
+                self.sindex[stem] = postinglist
         
 
 
@@ -371,7 +371,7 @@ class SAR_Indexer:
 
 
 
-    def show_stats(self):
+    def show_stats(self):#Luis José Ferrer Estellés
         """
         NECESARIO PARA TODAS LAS VERSIONES
         
@@ -383,7 +383,6 @@ class SAR_Indexer:
         ## COMPLETADO PARA TODAS LAS VERSIONES ##
         ########################################
         print("========================================")
-        print(self.index)
         print("Number of indexed files: " + str(len(self.docs)))
         print("----------------------------------------")
         print("Number of indexed articles: " + str(len(self.articles)))
@@ -398,7 +397,11 @@ class SAR_Indexer:
         if self.stemming:
             print("----------------------------------------")
             print("STEMS")
-            print("# of stems: " + str(len(self.sindex)))
+            if self.multifield:
+                for field in self.fields:
+                    print("# of stems in '" + field[0] + "': " + str(len(self.sindex[field[0]])))
+            else:
+                print("# of stems: " + str(len(self.sindex)))
 
     #################################
     ###                           ###
@@ -530,22 +533,20 @@ class SAR_Indexer:
         """
         
         stem = self.stemmer.stem(term)
-
+ 
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
-
-        #inicializamos la posting list con term
-        field = [term]
-
-        #buscamos todos los tokens que tengan el mismo stem y los añadimos a field 
-        if self.multifield:
-                pass
         
-        else:
-            for token in self.index:
-                if self.stemmer.stem(token) == stem:
-                    field.append(token)
+
+        #inicializamos la posting list con term si esta vacia
+        if field is None:
+            field = [term]
+            
+        
+        #si el termino no esta en la posting list, lo añadimos
+        if term not in field:
+            field.append(term)
         
         return field        
 
