@@ -237,14 +237,9 @@ class SAR_Indexer:
         #creamos un indice para cada sección del articulo si no existe ya
         
         if self.multifield:
-            if self.index.get('title') is None:
-                self.index['title'] = {}
-            if self.index.get('summary') is None:
-                self.index['summary'] = {}
-            if self.index.get('section-name') is None:
-                self.index['section-name'] = {}
-            if self.index.get('all') is None:
-                self.index['all'] = {}
+            for field in self.fields:
+                if self.index.get(field[0]) is None:
+                    self.index[field[0]] = {}
         
         for i, line in enumerate(open(filename)):
             j = self.parse_article(line)
@@ -383,7 +378,6 @@ class SAR_Indexer:
         ## COMPLETADO PARA TODAS LAS VERSIONES ##
         ########################################
         print("========================================")
-        print(self.index)
         print("Number of indexed files: " + str(len(self.docs)))
         print("----------------------------------------")
         print("Number of indexed articles: " + str(len(self.articles)))
