@@ -431,26 +431,22 @@ class SAR_Indexer:
 
         if query is None or len(query) == 0:
             return []
-        tokens = self.tokenize(query)   #tokenizamos la query
+        if isinstance(query, str):
+            tokens = self.tokenize(query)   #tokenizamos la query
+        else:
+            tokens = query
         if len(tokens) == 1:  #si solo hay un token en la query
             term, field = self.get_field(tokens[0])  #obtenemos el token y el campo
             return self.get_posting(term, field)  #devolvemos la posting list del token
         else:
-            opi = len(tokens) - 1  #el penúltimo token de la query es un operador
-            print(opi)
+            opi = len(tokens) - 2  #el penúltimo token de la query es un operador
             op = tokens[opi]
-            print(op)
             preop = tokens[:opi]  #los tokens anteriores al operador
-            print(preop)
             postop = tokens[opi+1:] #los tokens posteriores al operador
-            print(postop)
             if op == 'not':
-                print("pasa 1")
                 if opi == 0: #el NOT está al principio de la query
-                    print("pasa 2")
                     return self.reverse_posting(self.solve_query(postop))  #devolvemos la NOT del resto (sea un token o una query)
                 else:
-                    print("pasa 3")
                     opi -= 1
                     op = tokens[opi]
                     preop = tokens[:opi]
@@ -573,7 +569,7 @@ class SAR_Indexer:
 
 
 
-    def reverse_posting(self, p):
+    def reverse_posting(self, p): #Ricardo Díaz y David Oltra
         """
         Devuelve una posting list con todas las noticias excepto las contenidas en p.
         Util para resolver las queries con NOT.
@@ -583,10 +579,10 @@ class SAR_Indexer:
         return: posting list con todos los newid exceptos los contenidos en p
         """
         # Obtener todos los documentos en el índice
-        all_docs = [[doc_id, 0] for doc_id in sorted(self.docs.keys())]
+        all_arts = list(self.articles.keys())
 
         # Utilizar el método minus_posting para obtener todos los documentos excepto los que están en p
-        return self.minus_posting(all_docs, p)
+        return self.minus_posting(all_arts, p)
                                   
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
@@ -615,11 +611,11 @@ class SAR_Indexer:
             return []
         
         while i1 < len(p1) and i2 < len(p2): #mientras no llegue al final de p1 y al final de p2
-            if  p1[i1][0] == p2[i2][0]:  #si p1 y p2 contienen el mismo documento
-                res.append(p1[i1][0]) #añado la re
+            if  p1[i1] == p2[i2]:  #si p1 y p2 contienen el mismo documento
+                res.append(p1[i1]) #añado la re
                 i1 += 1
                 i2 += 1          
-            elif p1[i1][0]  < p2[i2][0]:
+            elif p1[i1]  < p2[i2]:
                 i1 += 1            
             else: i2 += 1
 
@@ -647,24 +643,24 @@ class SAR_Indexer:
             return []
         
         while i1 < len(p1) and i2 < len(p2): #mientras no llegue al final de p1 y al final de p2
-            if  p1[i1][0] == p2[i2][0]:  #si p1 y p2 contienen el mismo documento
-                res.append(p1[i1][0]) 
+            if  p1[i1] == p2[i2]:  #si p1 y p2 contienen el mismo documento
+                res.append(p1[i1]) 
                 i1 += 1
                 i2 += 1          
-            elif p1[i1][0]  < p2[i2][0]:
-                res.append(p1[i1][0]) 
+            elif p1[i1]  < p2[i2]:
+                res.append(p1[i1]) 
                 i1 += 1 
 
             else:
-                res.append(p2[i2][0]) 
+                res.append(p2[i2]) 
                 i2 += 1 
         
         while i1 < len(p1):
-            res.append(p1[i1][0])
+            res.append(p1[i1])
             i1 += 1 
         
         while i2 < len(p2):
-            res.append(p2[i2][0]) 
+            res.append(p2[i2]) 
             i2 += 1 
         
         return res
@@ -689,16 +685,16 @@ class SAR_Indexer:
         i2 = 0
 
         while i1 < len(p1) and i2 < len(p2): #mientras no llegue al final de p1 y al final de p2
-            if  p1[i1][0] == p2[i2][0]:  #si p1 y p2 contienen el mismo documento
+            if  p1[i1] == p2[i2]:  #si p1 y p2 contienen el mismo documento
                 i1 += 1
                 i2 += 1          
-            elif p1[i1][0]  < p2[i2][0]:
-                res.append(p1[i1][0]) #añado a res el documento i1 de p1
+            elif p1[i1]  < p2[i2]:
+                res.append(p1[i1]) #añado a res el documento i1 de p1
                 i1 += 1            
             else: i2 += 1
 
         while i1 < len(p1):
-            res.append(p1[i1][0])
+            res.append(p1[i1])
             i1 += 1 
         
         return res
