@@ -237,9 +237,9 @@ class SAR_Indexer:
         #creamos un indice para cada sección del articulo si no existe ya
         
         if self.multifield:
-            for tupla in self.fields:
-                if self.index.get(tupla[0]) is None:
-                    self.index[tupla[0]] = {}
+            for field in self.fields:
+                if self.index.get(field[0]) is None:
+                    self.index[field[0]] = {}
         
         for i, line in enumerate(open(filename)):
             j = self.parse_article(line)
