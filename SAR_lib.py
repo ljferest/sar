@@ -888,7 +888,11 @@ class SAR_Indexer:
                     print(f'{query}\t{result}')
                 else:
                     print(f'>>>>{query}\t{reference} != {result}<<<<')
-                    errors = True                    
+                    errors = True
+
+            else:
+                print(line)
+
         return not errors
 
     def solve_and_show(self, query:str): #Ricardo Díaz y David Oltra
