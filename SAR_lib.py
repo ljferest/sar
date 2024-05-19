@@ -53,6 +53,7 @@ class SAR_Indexer:
         self.weight = {} # hash de terminos para el pesado, ranking de resultados.
         self.articles = {} # hash de articulos --> clave entero (artid), valor: la info necesaria para diferencia los artículos dentro de su fichero
         self.tokenizer = re.compile("\W+") # expresion regular para hacer la tokenizacion
+        self.permtokenizer = re.compile("[^\w*?]+") # expresion regular para hacer la tokenizacion de permuterm
         self.stemmer = SnowballStemmer('spanish') # stemmer en castellano
         self.show_all = False # valor por defecto, se cambia con self.set_showall()
         self.show_snippet = False # valor por defecto, se cambia con self.set_snippet()
@@ -183,6 +184,18 @@ class SAR_Indexer:
         """
         return article['url'] in self.urls
 
+    def get_perms(self, token:str) -> List[str]:
+        """
+        Devuelve los permuterm de un token
+
+        Args:
+            token (str): token
+
+        Returns:
+            List[str]: lista con los permuterm del token
+        """
+        token += '$'
+        return [token[i:] + token[:i] for i in range(len(token))]
 
     def index_dir(self, root:str, **args):
         """
@@ -341,8 +354,10 @@ class SAR_Indexer:
         return: lista de tokens
 
         """
-        return self.tokenizer.sub(' ', text.lower()).split()
-
+        if '*' in text or '?' in text:
+            return self.permtokenizer.sub(' ', text.lower()).split()
+        else:
+            return self.tokenizer.sub(' ', text.lower()).split()
 
     def make_stemming(self):#Luis José Ferrer Estellés y  Diana Bachynska
         """
@@ -400,28 +415,30 @@ class SAR_Indexer:
         if self.multifield:
             for field in self.fields:
                 #creamos un indice permuterm para cada campo
-                self.ptindex[field[0]] = {}
+                if self.ptindex.get(field[0]) is None:
+                    self.ptindex[field[0]] = {}
+
                 for token in self.index[field[0]]:
-                    token += '$'
+                    perms = self.get_perms(token)
                     #creamos todos los posibles permuterms de un token
-                    for i in range(len(token)):
-                        #si el indice permuterm no tiene la clave token[i:] + token[:i], la creamos
-                        if self.ptindex[field[0]].get(token[i:] + token[:i]) is None:
-                            self.ptindex[field[0]][token[i:] + token[:i]] = []
+                    for perm in perms:
+                        #si el indice permuterm no tiene el permuterm, la creamos
+                        if self.ptindex[field[0]].get(perm) is None:
+                            self.ptindex[field[0]][perm] = []
                         #si el token no esta en el indice permuterm, lo añadimos
-                        if token not in self.ptindex[field[0]][token[i:] + token[:i]]:
-                            self.ptindex[field[0]][token[i:] + token[:i]].append(token)
+                        if token not in self.ptindex[field[0]][perm]:
+                            self.ptindex[field[0]][perm].append(token)
         else:
             for token in self.index:
-                token += '$'
+                perms = self.get_perms(token)
                 #creamos todos los posibles permuterms de un token
-                for i in range(len(token)):
+                for perm in perms:
                     #si el indice permuterm no tiene la clave token[i:] + token[:i], la creamos
-                    if self.ptindex.get(token[i:] + token[:i]) is None:
-                        self.ptindex[token[i:] + token[:i]] = []
+                    if self.ptindex.get(perm) is None:
+                        self.ptindex[perm] = []
                     #si el token no esta en el indice permuterm, lo añadimos
-                    if token not in self.ptindex[token[i:] + token[:i]]:
-                        self.ptindex[token[i:] + token[:i]].append(token)
+                    if token not in self.ptindex[perm]:
+                        self.ptindex[perm].append(token)
 
 
 
@@ -503,29 +520,21 @@ class SAR_Indexer:
         #########################################
         self.set_multifield(False)
         self.set_permuterm(False)
-        print(query)
         if query is None or len(query) == 0:
             return []
-        if '*' in query or '?' in query:  #si hay un comodín en la query
-            self.set_permuterm(True)
         if ':' in query:  #si hay un ':' en la query
             self.set_multifield(True)
         if isinstance(query, str):
-            print("tokeniza la query")
             tokens = self.tokenize(query)   #tokenizamos la query
-            print(tokens)
         else:
             tokens = query
-        print(f"tokens: ", tokens)
-        print(len(tokens))
         if len(tokens) == 1:  #si solo hay un token en la query
-            print("pasa len == 1")
+            if '*' in tokens[0] or '?' in tokens[0]:  #si hay un comodin en el token
+                self.set_permuterm(True)
             if self.multifield:
-                print("llama al multifield")
                 term, field = self.get_field(tokens[0])  #obtenemos el token y el campo
                 return self.get_posting(term, field)  #devolvemos la posting list del token y su campo
             else:
-                print("llama al posting")
                 return self.get_posting(tokens[0])  #devolvemos la posting list del token
         else:
             opi = len(tokens) - 2  #el penúltimo token de la query es un operador
@@ -583,7 +592,6 @@ class SAR_Indexer:
         if self.multifield and field is None:
             field = self.def_field
         if self.use_stemming:
-            print("llama al stemming")
             pl = self.get_stemming(term, field)
         elif self.permuterm:
             pl = self.get_permuterm(term, field)
@@ -654,13 +662,13 @@ class SAR_Indexer:
             for token in stems:
                 pl = getpl(token)
                 if pl is not None:
-                    res.append(pl)
+                    res = res + [x for x in pl if x not in res]
             return res
         else:
             return []
              
 
-    def get_permuterm(self, term:str, field:Optional[str]=None):#Diana Bachynska
+    def get_permuterm(self, term:str, field:Optional[str]=None):#Ricardo Díaz y David Oltra
         """
 
         Devuelve la posting list asociada a un termino utilizando el indice permuterm.
@@ -677,11 +685,35 @@ class SAR_Indexer:
         ## COMPLETADO PARA FUNCIONALIDAD EXTRA PERMUTERM ##
         ###################################################
         #si es multifield devolvemos la posting list del campo y el term
+        if '*' in term or '?' in term:
+            term = term.replace('*', ' ')
+            term = term.replace('?', ' ')
+            perm = term.split()
+            perm = perm[1] + '$' + perm[0]
+            
         if self.multifield:
-            return self.ptindex[field].get(term)
-        #si no es multifield devolvemos la posting list del term
+            terms = self.sindex[field].get(perm)
+            getpl = self.index[field].get
+        
+        #si no es multifield devolvemos la posting list del stem
+        
         else:
-            return self.ptindex.get(term)
+            terms = self.sindex.get(perm)
+            getpl = self.index.get
+        print(term)
+        print(perm)        
+        print(terms)
+        if terms is not None:
+            res = []
+            for token in terms:
+                pl = getpl(token)
+                if pl is not None:
+                    res = res + [x for x in pl if x not in res]
+            print(res)
+            print(len(res))
+            return res
+        else:
+            return []
 
 
 
@@ -858,7 +890,6 @@ class SAR_Indexer:
                     print(f'>>>>{query}\t{reference} != {result}<<<<')
                     errors = True                    
         return not errors
-
 
     def solve_and_show(self, query:str): #Ricardo Díaz y David Oltra
         """
