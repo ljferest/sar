@@ -430,8 +430,11 @@ class SAR_Indexer:
         else:
             tokens = query
         if len(tokens) == 1:  #si solo hay un token en la query
-            term, field = self.get_field(tokens[0])  #obtenemos el token y el campo
-            return self.get_posting(term, field)  #devolvemos la posting list del token
+            if self.multifield:
+                term, field = self.get_field(tokens[0])  #obtenemos el token y el campo
+                return self.get_posting(term, field)  #devolvemos la posting list del token y su campo
+            else:
+                return self.get_posting(tokens[0])  #devolvemos la posting list del token
         else:
             opi = len(tokens) - 2  #el penúltimo token de la query es un operador
             op = tokens[opi]
@@ -486,8 +489,12 @@ class SAR_Indexer:
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
-
-        pl = self.index.get(term)
+        if field is not None and self.multifield:
+            pl = self.index[field].get(term)
+        elif self.stemming:
+            pl = self.get_stemming(term)
+        else:
+            pl = self.index.get(term)
         return pl
 
 
