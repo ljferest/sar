@@ -95,8 +95,49 @@ class SAR_Indexer:
 
         """
         self.show_snippet = v
+    
+    def set_stemming(self, v:bool):
+        """
 
+        Cambia el modo de stemming por defecto.
+        
+        input: "v" booleano.
 
+        UTIL PARA LA VERSION CON STEMMING
+
+        si self.use_stemming es True las consultas se resolveran aplicando stemming por defecto.
+
+        """
+        self.use_stemming = v
+
+    def set_multifield(self, v:bool):
+        """
+
+        Cambia el modo de multifield por defecto.
+        
+        input: "v" booleano.
+
+        UTIL PARA LA VERSION MULTIFIELD
+
+        si self.multifield es True las consultas se resolveran en todos los campos.
+
+        """
+        self.multifield = v
+    
+    def set_permuterm(self, v:bool):
+        """
+
+        Cambia el modo de multifield por defecto.
+        
+        input: "v" booleano.
+
+        UTIL PARA LA VERSION MULTIFIELD
+
+        si self.multifield es True las consultas se resolveran en todos los campos.
+
+        """
+        self.permuterm = v
+    
     #############################################
     ###                                       ###
     ###      CARGA Y GUARDADO DEL INDICE      ###
@@ -174,9 +215,9 @@ class SAR_Indexer:
             print(f"ERROR:{root} is not a file nor directory!", file=sys.stderr)
             sys.exit(-1)
 
-        ##########################################
-        ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
-        ##########################################
+        ###########################################
+        ## COMPLETADO PARA FUNCIONALIDADES EXTRA ##
+        ###########################################
 
         #si esta activado el uso de stemming llamamos a make_stemming para rellenar sel.sindex
         if self.stemming:
@@ -253,9 +294,9 @@ class SAR_Indexer:
         #
         #
         #
-        #################
+        ##################
         ### COMPLETADO ###
-        #################
+        ##################
 
             #si el articulo ya esta indexado, no lo indexamos de nuevo
             if self.already_in_index(j):
@@ -286,21 +327,6 @@ class SAR_Indexer:
                   elif self.index[token].count(artid) == 0:
                       self.index[token].append(artid)
             self.urls.add(j['url'])    
-    
-
-    def set_stemming(self, v:bool):
-        """
-
-        Cambia el modo de stemming por defecto.
-        
-        input: "v" booleano.
-
-        UTIL PARA LA VERSION CON STEMMING
-
-        si self.use_stemming es True las consultas se resolveran aplicando stemming por defecto.
-
-        """
-        self.use_stemming = v
 
 
     def tokenize(self, text:str):
@@ -333,6 +359,7 @@ class SAR_Indexer:
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
+
         if self.multifield:
             for tupla in self.fields:
                 self.sindex[tupla[0]] = {}
@@ -365,9 +392,9 @@ class SAR_Indexer:
 
 
         """
-        ####################################################
-        ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
-        ####################################################
+        #####################################################
+        ## COMPLETADO PARA FUNCIONALIDAD EXTRA DE STEMMING ##
+        #####################################################
 
         #si es multifield creamos un indice permuterm para cada campo
         if self.multifield:
@@ -407,9 +434,9 @@ class SAR_Indexer:
         
         """
 
-        ########################################
+        #########################################
         ## COMPLETADO PARA TODAS LAS VERSIONES ##
-        ########################################
+        #########################################
         print("========================================")
         print("Number of indexed files: " + str(len(self.docs)))
         print("----------------------------------------")
@@ -471,18 +498,34 @@ class SAR_Indexer:
         return: posting list con el resultado de la query
 
         """
-
+        #########################################
+        ## COMPLETADO PARA TODAS LAS VERSIONES ##
+        #########################################
+        self.set_multifield(False)
+        self.set_permuterm(False)
+        print(query)
         if query is None or len(query) == 0:
             return []
+        if '*' in query or '?' in query:  #si hay un comodín en la query
+            self.set_permuterm(True)
+        if ':' in query:  #si hay un ':' en la query
+            self.set_multifield(True)
         if isinstance(query, str):
+            print("tokeniza la query")
             tokens = self.tokenize(query)   #tokenizamos la query
+            print(tokens)
         else:
             tokens = query
+        print(f"tokens: ", tokens)
+        print(len(tokens))
         if len(tokens) == 1:  #si solo hay un token en la query
+            print("pasa len == 1")
             if self.multifield:
+                print("llama al multifield")
                 term, field = self.get_field(tokens[0])  #obtenemos el token y el campo
                 return self.get_posting(term, field)  #devolvemos la posting list del token y su campo
             else:
+                print("llama al posting")
                 return self.get_posting(tokens[0])  #devolvemos la posting list del token
         else:
             opi = len(tokens) - 2  #el penúltimo token de la query es un operador
@@ -505,9 +548,7 @@ class SAR_Indexer:
             elif op == 'or':
                 return self.or_posting(self.solve_query(preop), self.solve_query(postop))
 
-        ########################################
-        ## COMPLETAR PARA TODAS LAS VERSIONES ##
-        ########################################
+        
 
     def get_field(self, cadena:str): #Ricardo Díaz y David Oltra
         tokens = cadena.split(':')
@@ -535,16 +576,25 @@ class SAR_Indexer:
 
         """
 
-        ########################################
-        ## COMPLETAR PARA TODAS LAS VERSIONES ##
-        ########################################
-        if field is not None and self.multifield:
-            pl = self.index[field].get(term)
-        elif self.stemming:
-            pl = self.get_stemming(term)
+        #########################################
+        ## COMPLETADO PARA TODAS LAS VERSIONES ##
+        #########################################
+        #posibles combinaciones: multifield, stemming, permuterm, multifield+stemming, stemming+permuterm
+        if self.multifield and field is None:
+            field = self.def_field
+        if self.use_stemming:
+            print("llama al stemming")
+            pl = self.get_stemming(term, field)
+        elif self.permuterm:
+            pl = self.get_permuterm(term, field)
         else:
-            pl = self.index.get(term)
-        return pl
+            if self.multifield:
+                pl = self.index[field].get(term)
+            else:
+                pl = self.index.get(term)
+        return pl if pl is not None else []
+
+
 
 
 
@@ -566,7 +616,7 @@ class SAR_Indexer:
         ########################################################
 
 
-    def get_stemming(self, term:str, field: Optional[str]=None):#Luis José Ferrer Estellés
+    def get_stemming(self, term:str, field: Optional[str]=None):#Ricardo Díaz y David Oltra
         """
 
         Devuelve la posting list asociada al stem de un termino.
@@ -578,19 +628,36 @@ class SAR_Indexer:
         return: posting list
 
         """
-        
+        #posibilidades stem, stem+multi, stem+permu, stem+multi+permu
         stem = self.stemmer.stem(term)
  
-        ####################################################
-        ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
-        ####################################################
+        #####################################################
+        ## COMPLETADO PARA FUNCIONALIDAD EXTRA DE STEMMING ##
+        #####################################################
         
         #si es multifield devolvemos la posting list del campo y el stem
-        if self.multifield:
-                return self.sindex[field].get(stem)
+        if self.permuterm:
+            return self.get_permuterm(term, field)
+        
+        elif self.multifield:
+            stems = self.sindex[field].get(stem)
+            getpl = self.index[field].get
+        
         #si no es multifield devolvemos la posting list del stem
+        
         else:
-            return self.sindex.get(stem)
+            stems = self.sindex.get(stem)
+            getpl = self.index.get
+
+        if stems is not None:
+            res = []
+            for token in stems:
+                pl = getpl(token)
+                if pl is not None:
+                    res.append(pl)
+            return res
+        else:
+            return []
              
 
     def get_permuterm(self, term:str, field:Optional[str]=None):#Diana Bachynska
@@ -606,9 +673,9 @@ class SAR_Indexer:
 
         """
 
-        ##################################################
-        ## COMPLETAR PARA FUNCIONALIDAD EXTRA PERMUTERM ##
-        ##################################################
+        ###################################################
+        ## COMPLETADO PARA FUNCIONALIDAD EXTRA PERMUTERM ##
+        ###################################################
         #si es multifield devolvemos la posting list del campo y el term
         if self.multifield:
             return self.ptindex[field].get(term)
@@ -627,15 +694,15 @@ class SAR_Indexer:
 
         return: posting list con todos los newid exceptos los contenidos en p
         """
+        ##################
+        ##  COMPLETADO  ##
+        ##################
+
         # Obtener todos los documentos en el índice
         all_arts = list(self.articles.keys())
 
         # Utilizar el método minus_posting para obtener todos los documentos excepto los que están en p
         return self.minus_posting(all_arts, p)
-                                  
-        ########################################
-        ## COMPLETAR PARA TODAS LAS VERSIONES ##
-        ########################################
 
 
 
@@ -651,7 +718,10 @@ class SAR_Indexer:
         return: posting list con los artid incluidos en p1 y p2
 
         """
-        
+        ##################
+        ##  COMPLETADO  ##
+        ##################
+
         res  = []
         i1 = 0
         i2 = 0
@@ -683,6 +753,9 @@ class SAR_Indexer:
         return: posting list con los artid incluidos de p1 o p2
 
         """
+        ##################
+        ##  COMPLETADO  ##
+        ##################
 
         res  = []
         i1 = 0
@@ -728,6 +801,9 @@ class SAR_Indexer:
         return: posting list con los artid incluidos de p1 y no en p2
 
         """
+        ##################
+        ##  COMPLETADO  ##
+        #################
 
         res  = []
         i1 = 0
@@ -795,7 +871,10 @@ class SAR_Indexer:
         return: el numero de artículo recuperadas, para la opcion -T
 
         """
-
+        ##################
+        ##  COMPLETADO  ##
+        ##################
+        print(query)
         sol = self.solve_query(query)
         print(sol)
         print("========================================")
@@ -810,15 +889,3 @@ class SAR_Indexer:
         print("========================================")
         print(f"Number of results: {len(sol)}")
         return len(sol)
-        ################
-        ## COMPLETAR  ##
-        ################
-        
-
-
-
-
-
-
-        
-
