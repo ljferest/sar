@@ -496,7 +496,7 @@ class SAR_Indexer:
                 tokens = self.tokenize(query)   #tokenizamos la query
         else:
             tokens = query
-
+        print("tokens: ", tokens)
         if len(tokens) == 1:  #si solo hay un token en la query
 
             return self.get_posting(tokens[0])  #devolvemos la posting list del token
@@ -506,7 +506,9 @@ class SAR_Indexer:
             preop = tokens[:opi]  #los tokens anteriores al operador
             postop = tokens[opi+1:] #los tokens posteriores al operador
             if op == 'not':
+                print("pasa por not")
                 if opi == 0: #el NOT está al principio de la query
+                    print("pasa por not 0")
                     return self.reverse_posting(self.solve_query(postop))  #devolvemos la NOT del resto (sea un token o una query)
                 else:
                     opi -= 1
@@ -572,7 +574,7 @@ class SAR_Indexer:
             else:
                 pl = self.index.get(term)  #devolvemos la posting list del token
 
-        return pl if pl is not None else []
+        return sorted(pl) if pl is not None else []
 
 
     def get_positionals(self, terms:str, index):
@@ -697,7 +699,7 @@ class SAR_Indexer:
 
 
 
-    def reverse_posting(self, p): #Ricardo Díaz y David Oltra
+    def reverse_posting(self, p): #Diana Bachynska
         """
         Devuelve una posting list con todas las noticias excepto las contenidas en p.
         Util para resolver las queries con NOT.
@@ -712,7 +714,6 @@ class SAR_Indexer:
 
         # Obtener todos los documentos en el índice
         all_arts = list(self.articles.keys())
-        print("total articulos: ", len(all_arts))
         # Utilizar el método minus_posting para obtener todos los documentos excepto los que están en p
         return self.minus_posting(all_arts, p)
 
