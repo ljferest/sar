@@ -523,11 +523,11 @@ class SAR_Indexer:
         
 
     def get_field(self, cadena:str): #Ricardo Díaz y David Oltra
-        tokens = cadena.split(':')
+        tokens = cadena.split(':') #separamos el token del campo
         if len(tokens) == 1:
-            return tokens[0], self.def_field
+            return tokens[0], self.def_field #si no hay campo, devolvemos el token y el campo por defecto
         else:
-            return tokens[1], tokens[0]
+            return tokens[1], tokens[0] #si hay campo, devolvemos el token y el campo
         
     def get_posting(self, term:str, field:Optional[str]=None): #Ricardo Díaz y David Oltra
         """
@@ -555,22 +555,22 @@ class SAR_Indexer:
         if ':' in term:  #si hay un ':' en el token
             term, field = self.get_field(term)  #obtenemos el token y el campo
             bien = False
-            for f in self.fields:
+            for f in self.fields: #comprobamos que el campo sea correcto
                 if f[0] == field:
                     bien = True
             if not bien:
-                return []
+                return [] #si el campo no es correcto, devolvemos una lista vacía
         else:
-            if isinstance(self.index.get(self.def_field), dict) and field is None:
+            if isinstance(self.index.get(self.def_field), dict) and field is None: #si no hay campo y el campo por defecto es un diccionario, guardamos el campo como campo por defecto
                 field = self.def_field
         if '*' in term or '?' in term:  #si hay un comodin en el token
             pl = self.get_permuterm(term, field)  #devolvemos la posting list del token
 
-        elif self.use_stemming:
+        elif self.use_stemming: #si se usa stemming
             pl = self.get_stemming(term, field)
         
         else:
-            if field is not None:
+            if field is not None: #si es multifield devolvemos la posting list del campo y el token
                 pl = self.index[field].get(term)  #devolvemos la posting list del token
             else:
                 pl = self.index.get(term)  #devolvemos la posting list del token
@@ -612,20 +612,18 @@ class SAR_Indexer:
         #####################################################
         ## COMPLETADO PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         #####################################################
-        #si es multifield devolvemos la posting list del campo y el stem
-        #si no es multifield devolvemos la posting list del stem
 
-        if field is not None:
+        if field is not None: #si es multifield
             stems = self.sindex[field].get(stem)
             getpl = self.index[field].get
         
-        else:
+        else: #si no es multifield
             stems = self.sindex.get(stem)
             getpl = self.index.get
 
-        if stems is not None:
+        if stems is not None: #si hay stems
             res = []
-            for token in stems:
+            for token in stems: #para cada token en los stems, conseguimos su posting list y la sumamos si no se repite
                 pl = getpl(token)
                 if pl is not None:
                     res = res + [x for x in pl if x not in res]
@@ -652,29 +650,31 @@ class SAR_Indexer:
         ###################################################
         #si es multifield devolvemos la posting list del campo y el term
 
-        if '*' in term:
+        if '*' in term: #si hay un '*' en el token la palabra puede ser más larga
             largo = True
-        elif '?' in term:
+        elif '?' in term: #si hay un '?' en el token la palabra no puede ser más larga
             largo = False
 
-        if '*' in term or '?' in term:
+        if '*' in term or '?' in term: #si hay un comodin en el token
             term = term.replace('*', ' ')
             term = term.replace('?', ' ')
-            perm = term.split()
-            perm = perm[1] + '$' + perm[0]
+            perm = term.split() #quitamos el comodín y separamos el token en dos partes
+            if len(perm) == 2: #si hay solo un comodín todo bien
+                perm = perm[1] + '$' + perm[0]
+            else: #si hay más de un comodín, devolvemos una lista vacía
+                return []
 
-        if field is not None:
-            keys = self.ptindex[field].keys()
-            getterm = self.ptindex[field].get
-            getpl = self.index[field].get
-        else:
-
-            keys = self.ptindex.keys()
-            getterm = self.ptindex.get
-            getpl = self.index.get
+        if field is not None: #si es multifield
+            keys = self.ptindex[field].keys() #obtenemos las claves del campo
+            getterm = self.ptindex[field].get #obtenemos el get del campo
+            getpl = self.index[field].get #obtenemos la posting list del campo
+        else: #si no es multifield
+            keys = self.ptindex.keys() #obtenemos las claves
+            getterm = self.ptindex.get #obtenemos el get
+            getpl = self.index.get #obtenemos la posting list
 
         terms = []
-        if keys is not None:
+        if keys is not None: #si hay
             for key in keys:
                 if key.startswith(perm) and ((not largo and (len(key) == len(perm) + 1)) or largo) and key not in terms:
                     terms += getterm(key)
