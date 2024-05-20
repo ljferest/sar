@@ -387,6 +387,7 @@ class SAR_Indexer:
                 if self.ptindex.get(field[0]) is None:
                     self.ptindex[field[0]] = {}
 
+                #iteramos sobre los tokens de cada campo
                 for token in self.index[field[0]]:
                     perms = self.get_perms(token)
                     #creamos todos los posibles permuterms de un token
