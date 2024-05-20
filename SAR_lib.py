@@ -469,7 +469,7 @@ class SAR_Indexer:
     ###################################
 
 
-    def solve_query(self, query:str, prev:Dict={}): #Ricardo Díaz y David Oltra
+    def solve_query(self, query:str, prev:Dict={}): #Ricardo Díaz, David Oltra y Diana Bachynska
         """
         NECESARIO PARA TODAS LAS VERSIONES
 
@@ -647,37 +647,34 @@ class SAR_Indexer:
         ## COMPLETADO PARA FUNCIONALIDAD EXTRA PERMUTERM ##
         ###################################################
         #si es multifield devolvemos la posting list del campo y el term
+
         if '*' in term:
             largo = True
         elif '?' in term:
             largo = False
-        print("term prepocessed: ", term)
+
         if '*' in term or '?' in term:
             term = term.replace('*', ' ')
             term = term.replace('?', ' ')
             perm = term.split()
             perm = perm[1] + '$' + perm[0]
-        print("term postprocessed: ", term)
-        if field is not None:
-            keys = self.ptindex[field].get(perm)
-            getterms = self.ptindex[field].get
-            getpl = self.index[field].get
-            pass
-        
-        else:
-            keys = self.ptindex.get(perm)
-            getterms = self.ptindex.get
-            getpl = self.index.get
 
+        if field is not None:
+            keys = self.ptindex[field].keys()
+            getterm = self.ptindex[field].get
+            getpl = self.index[field].get
+        else:
+
+            keys = self.ptindex.keys()
+            getterm = self.ptindex.get
+            getpl = self.index.get
         terms = []
         if keys is not None:
             for key in keys:
-                if key.startswith(perm):
-                    subkeys = getterms(key)
-                    if subkeys is not None:
-                        for subkey in subkeys:
-                            if ((not largo and (len(key) == len(perm) + 1)) or largo) and subkey not in terms:
-                                terms += subkey
+                if key.startswith(perm) and ((not largo and (len(key) == len(perm) + 1)) or largo) and key not in terms:
+
+                    terms += getterm(key)
+
         if terms is not None:
             res = []
             for token in terms:
