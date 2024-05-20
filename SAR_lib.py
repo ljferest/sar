@@ -496,7 +496,6 @@ class SAR_Indexer:
                 tokens = self.tokenize(query)   #tokenizamos la query
         else:
             tokens = query
-        print("tokens: ", tokens)
         if len(tokens) == 1:  #si solo hay un token en la query
 
             return self.get_posting(tokens[0])  #devolvemos la posting list del token
@@ -506,9 +505,7 @@ class SAR_Indexer:
             preop = tokens[:opi]  #los tokens anteriores al operador
             postop = tokens[opi+1:] #los tokens posteriores al operador
             if op == 'not':
-                print("pasa por not")
                 if opi == 0: #el NOT está al principio de la query
-                    print("pasa por not 0")
                     return self.reverse_posting(self.solve_query(postop))  #devolvemos la NOT del resto (sea un token o una query)
                 else:
                     opi -= 1
@@ -623,16 +620,12 @@ class SAR_Indexer:
             stems = self.sindex.get(stem)
             getpl = self.index.get
 
-        print("stem: ", stem)
-
         if stems is not None:
             res = []
             for token in stems:
                 pl = getpl(token)
                 if pl is not None:
                     res = res + [x for x in pl if x not in res]
-            print(len(res))
-            print(res)
             return res
         else:
             return []
@@ -664,10 +657,7 @@ class SAR_Indexer:
             term = term.replace('?', ' ')
             perm = term.split()
             perm = perm[1] + '$' + perm[0]
-            print("term: ",term)
-            print("perm: ",perm)
 
-        print("field: ", field)
         if field is not None:
             keys = self.ptindex[field].get(perm)
             getterms = self.ptindex[field].get
@@ -681,12 +671,10 @@ class SAR_Indexer:
         for key in keys:
             if key.startswith(perm):
                 subkeys = getterms(key)
-                print("subkeys: ", subkeys)
                 if subkeys is not None:
                     for subkey in subkeys:
                         if ((not largo and (len(key) == len(perm) + 1)) or largo) and subkey not in terms:
                             terms += subkey
-        print("terms: ", terms)
         if terms is not None:
             res = []
             for token in terms:
