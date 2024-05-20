@@ -674,17 +674,18 @@ class SAR_Indexer:
             getpl = self.index.get #obtenemos la posting list
 
         terms = []
-        if keys is not None: #si hay
+        if keys is not None: #si hay claves (permuterms completos)
             for key in keys:
+                #si la clave empieza por el permuterm y tiene la longitud adecuada, la añadimos a la lista de términos si no se repite
                 if key.startswith(perm) and ((not largo and (len(key) == len(perm) + 1)) or largo) and key not in terms:
                     terms += getterm(key)
 
-        if terms is not None and len(terms) > 0:
+        if terms is not None and len(terms) > 0: #si hay términos
             res = []
             for token in terms:
-                pl = getpl(token)
+                pl = getpl(token) #obtenemos la posting list del token
                 if pl is not None:
-                    res = res + [x for x in pl if x not in res]
+                    res = res + [x for x in pl if x not in res] #añadimos a res los elementos de la posting list que no se repiten
             return res
         else:
             return []
@@ -762,9 +763,9 @@ class SAR_Indexer:
         i1 = 0
         i2 = 0
 
-        if p1 == [] and p2 != []:
+        if p1 == [] and p2 != []: #si p1 está vacía y p2 no, devuelvo p2
             return p2
-        if p2 == [] and p1 != []:  #si las dos posting list están vacias, devuelvo una lista vacía
+        if p2 == [] and p1 != []: #si p2 está vacía y p1 no, devuelvo p1
             return p1
         
         while i1 < len(p1) and i2 < len(p2): #mientras no llegue al final de p1 y al final de p2
@@ -880,15 +881,15 @@ class SAR_Indexer:
         ##################
         ##  COMPLETADO  ##
         ##################
-        sol = self.solve_query(query)
+        sol = self.solve_query(query) #resolvemos la query
         print("========================================")
         i = 1
-        for artid in sol:
-            docid, linea = self.articles[artid]
-            doc = self.docs[docid]
-            with open(doc) as fh:
-                dic = self.parse_article(fh.readlines()[linea])
-            print(f"# {i:02d} {dic['title']}: {dic['url']}")
+        for artid in sol: #para cada articulo en la posting list
+            docid, linea = self.articles[artid] #obtenemos el docid y la linea
+            doc = self.docs[docid] #obtenemos el documento
+            with open(doc) as fh: #abrimos el documento
+                dic = self.parse_article(fh.readlines()[linea]) #parseamos el articulo
+            print(f"# {i:02d} {dic['title']}: {dic['url']}") #mostramos el titulo y la url
             i+=1
         print("========================================")
         print(f"Number of results: {len(sol)}")
