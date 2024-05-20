@@ -468,7 +468,6 @@ class SAR_Indexer:
     ###                             ###
     ###################################
 
-
     def solve_query(self, query:str, prev:Dict={}): #Ricardo Díaz, David Oltra y Diana Bachynska
         """
         NECESARIO PARA TODAS LAS VERSIONES
@@ -496,6 +495,7 @@ class SAR_Indexer:
                 tokens = self.tokenize(query)   #tokenizamos la query
         else:
             tokens = query
+
         if len(tokens) == 1:  #si solo hay un token en la query
 
             return self.get_posting(tokens[0])  #devolvemos la posting list del token
@@ -508,17 +508,17 @@ class SAR_Indexer:
                 if opi == 0: #el NOT está al principio de la query
                     return self.reverse_posting(self.solve_query(postop))  #devolvemos la NOT del resto (sea un token o una query)
                 else:
-                    opi -= 1
-                    op = tokens[opi]
-                    preop = tokens[:opi]
+                    opi -= 1 #el verdadero operador es el que hay antes, y del después haremos la reverse_posting
+                    op = tokens[opi] #actualizamos el operador
+                    preop = tokens[:opi] #actualizamos los tokens anteriores al operador
                     if op == 'and':
                         return self.minus_posting(self.solve_query(preop), self.solve_query(postop))  #devolvemos la resta de las dos posting list
                     elif op == 'or':
-                        return self.or_posting(self.solve_query(preop), self.reverse_posting(self.solve_query(postop)))
-            elif op == 'and':
-                return self.and_posting(self.solve_query(preop), self.solve_query(postop))
+                        return self.or_posting(self.solve_query(preop), self.reverse_posting(self.solve_query(postop))) #devolvemos la OR de la posting list de la izquierda y la reverse_posting de la derecha
+            elif op == 'and': 
+                return self.and_posting(self.solve_query(preop), self.solve_query(postop)) #devolvemos la AND de las dos posting list
             elif op == 'or':
-                return self.or_posting(self.solve_query(preop), self.solve_query(postop))
+                return self.or_posting(self.solve_query(preop), self.solve_query(postop)) #devolvemos la OR de las dos posting list
 
         
 
@@ -554,9 +554,14 @@ class SAR_Indexer:
         #posibles combinaciones: multifield, stemming, permuterm, multifield+stemming, stemming+permuterm
         if ':' in term:  #si hay un ':' en el token
             term, field = self.get_field(term)  #obtenemos el token y el campo
+            bien = False
+            for f in self.fields:
+                if f[0] == field:
+                    bien = True
+            if not bien:
+                return []
         else:
             if isinstance(self.index.get(self.def_field), dict) and field is None:
-                print("entra puto aquí")
                 field = self.def_field
         if '*' in term or '?' in term:  #si hay un comodin en el token
             pl = self.get_permuterm(term, field)  #devolvemos la posting list del token
@@ -569,7 +574,6 @@ class SAR_Indexer:
                 pl = self.index[field].get(term)  #devolvemos la posting list del token
             else:
                 pl = self.index.get(term)  #devolvemos la posting list del token
-
         return sorted(pl) if pl is not None else []
 
 
@@ -668,14 +672,14 @@ class SAR_Indexer:
             keys = self.ptindex.keys()
             getterm = self.ptindex.get
             getpl = self.index.get
+
         terms = []
         if keys is not None:
             for key in keys:
                 if key.startswith(perm) and ((not largo and (len(key) == len(perm) + 1)) or largo) and key not in terms:
-
                     terms += getterm(key)
 
-        if terms is not None:
+        if terms is not None and len(terms) > 0:
             res = []
             for token in terms:
                 pl = getpl(token)
@@ -684,8 +688,6 @@ class SAR_Indexer:
             return res
         else:
             return []
-
-
 
     def reverse_posting(self, p): #Diana Bachynska
         """
@@ -704,8 +706,6 @@ class SAR_Indexer:
         all_arts = list(self.articles.keys())
         # Utilizar el método minus_posting para obtener todos los documentos excepto los que están en p
         return self.minus_posting(all_arts, p)
-
-
 
     def and_posting(self, p1:list, p2:list): #Diana Bachynska
         """
@@ -762,8 +762,10 @@ class SAR_Indexer:
         i1 = 0
         i2 = 0
 
-        if p1 == [] or p2 == []:  #si las dos posting list están vacias, devuelvo una lista vacía
-            return []
+        if p1 == [] and p2 != []:
+            return p2
+        if p2 == [] and p1 != []:  #si las dos posting list están vacias, devuelvo una lista vacía
+            return p1
         
         while i1 < len(p1) and i2 < len(p2): #mientras no llegue al final de p1 y al final de p2
             if  p1[i1] == p2[i2]:  #si p1 y p2 contienen el mismo documento

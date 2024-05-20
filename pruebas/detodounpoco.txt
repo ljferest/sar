@@ -1,0 +1,8 @@
+
+cosa
+summary:todo AND summary:el AND summary:mundo
+title:búsqueda AND title:y AND title:recuperación AND title:información
+title:información OR title:Google
+title:información AND summary:recuperación AND NOT section-name:precisión
+title:lengua
+title:lenguaje
