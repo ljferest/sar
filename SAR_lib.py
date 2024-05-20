@@ -648,12 +648,11 @@ class SAR_Indexer:
         ###################################################
         ## COMPLETADO PARA FUNCIONALIDAD EXTRA PERMUTERM ##
         ###################################################
-        #si es multifield devolvemos la posting list del campo y el term
-
-        if '*' in term: #si hay un '*' en el token la palabra puede ser más larga
-            largo = True
-        elif '?' in term: #si hay un '?' en el token la palabra no puede ser más larga
+        #si es multifield devolvemos la posting list del campo y el termino
+        if '?' in term: #si hay un '?' en el token la palabra no puede ser más larga
             largo = False
+        elif '*' in term: #si hay un '*' en el token la palabra puede ser más larga
+            largo = True
 
         if '*' in term or '?' in term: #si hay un comodin en el token
             term = term.replace('*', ' ')
