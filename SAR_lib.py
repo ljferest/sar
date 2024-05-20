@@ -673,7 +673,7 @@ class SAR_Indexer:
             getterms = self.ptindex[field].get
             getpl = self.index[field].get
         else:
-            if self.index.get(self.def_field) is not None:
+            if self.ptindex.get(self.def_field) is not None:
                 keys = self.ptindex[self.def_field].get(perm)
                 getterms = self.ptindex[self.def_field].get
                 getpl = self.index[self.def_field].get
