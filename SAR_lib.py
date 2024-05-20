@@ -290,7 +290,7 @@ class SAR_Indexer:
             artid=len(artic)+1
             self.articles[artid] =(docid,i)
             if self.multifield:
-                #iteramos sobre field para ver que campos tenemos que tokenizar, dentro de los que hay que tokenizar iteramos sobre los tokens y los guardamos en el indice
+                #iteramos sobre field para ver que campos tenemos que tokenizar, dentro de los que hay que tokenizar iteramos sobre los tokens y los guardamos en el indice con una posting list de los articulos en los que aparece
                
                 for tupla in self.fields:
                     if tupla[1]:
@@ -301,7 +301,7 @@ class SAR_Indexer:
                                 self.index[tupla[0]][token].append(artid)
                     else:
                         self.index[tupla[0]] = j[tupla[0]]           
-               
+               #si no es multifield, tokenizamos el texto de j[all] iteramos sobre los tokens y los guardamos en el indice con una posting list de los articulos en los que aparece
             else:        
               txt = j['all']
               tokens_list = self.tokenize(txt)
