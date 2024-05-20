@@ -251,7 +251,6 @@ class SAR_Indexer:
 
         dependiendo del valor de self.multifield y self.positional se debe ampliar el indexado
 
-
         """
 
         #comprobamos si self.docs esta vacio , si lo esta lo inicializamos y si no esta vacio le ponemos como id la cantidad de documentos más 1 
@@ -326,10 +325,8 @@ class SAR_Indexer:
         return: lista de tokens
 
         """
-        if '*' in text or '?' in text or ':' in text:
-            return self.permtokenizer.sub(' ', text.lower()).split()
-        else:
-            return self.tokenizer.sub(' ', text.lower()).split()
+        
+        return self.tokenizer.sub(' ', text.lower()).split()
 
     def make_stemming(self):#Luis José Ferrer Estellés y  Diana Bachynska
         """
@@ -493,7 +490,10 @@ class SAR_Indexer:
         if query is None or len(query) == 0:
             return []
         if isinstance(query, str):
-            tokens = self.tokenize(query)   #tokenizamos la query
+            if '*' in query or '?' in query or ':' in query:
+                tokens = self.permtokenizer.sub(' ', query.lower()).split()
+            else:
+                tokens = self.tokenize(query)   #tokenizamos la query
         else:
             tokens = query
 
@@ -553,10 +553,11 @@ class SAR_Indexer:
         ## COMPLETADO PARA TODAS LAS VERSIONES ##
         #########################################
         #posibles combinaciones: multifield, stemming, permuterm, multifield+stemming, stemming+permuterm
+
         if ':' in term:  #si hay un ':' en el token
             term, field = self.get_field(term)  #obtenemos el token y el campo
         else:
-            if self.index.get(self.def_field) is not None:
+            if self.index.get(term) is None:
                 field = self.def_field
 
         if '*' in term or '?' in term:  #si hay un comodin en el token
@@ -610,22 +611,17 @@ class SAR_Indexer:
         ## COMPLETADO PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         #####################################################
         #si es multifield devolvemos la posting list del campo y el stem
-        if ':' in term:
-            term, field = self.get_field(term)
-            stems = self.sindex[field].get(stem)
-            getpl = self.index[field].get
-        
         #si no es multifield devolvemos la posting list del stem
+
         if field is not None:
             stems = self.sindex[field].get(stem)
             getpl = self.index[field].get
+        
         else:
-            if self.sindex.get(self.def_field) is not None:
-                stems = self.sindex[self.def_field].get(stem)
-                getpl = self.index[self.def_field].get
-            else:
-                stems = self.sindex.get(stem)
-                getpl = self.index.get
+            stems = self.sindex.get(stem)
+            getpl = self.index.get
+
+        print("stem: ", stem)
 
         if stems is not None:
             res = []
@@ -633,6 +629,8 @@ class SAR_Indexer:
                 pl = getpl(token)
                 if pl is not None:
                     res = res + [x for x in pl if x not in res]
+            print(len(res))
+            print(res)
             return res
         else:
             return []
@@ -673,14 +671,9 @@ class SAR_Indexer:
             getterms = self.ptindex[field].get
             getpl = self.index[field].get
         else:
-            if self.ptindex.get(self.def_field) is not None:
-                keys = self.ptindex[self.def_field].get(perm)
-                getterms = self.ptindex[self.def_field].get
-                getpl = self.index[self.def_field].get
-            else:
-                keys = self.ptindex.get(perm)
-                getterms = self.ptindex.get
-                getpl = self.index.get
+            keys = self.ptindex.get(perm)
+            getterms = self.ptindex.get
+            getpl = self.index.get
 
         terms = []
         for key in keys:
@@ -719,7 +712,7 @@ class SAR_Indexer:
 
         # Obtener todos los documentos en el índice
         all_arts = list(self.articles.keys())
-
+        print("total articulos: ", len(all_arts))
         # Utilizar el método minus_posting para obtener todos los documentos excepto los que están en p
         return self.minus_posting(all_arts, p)
 
